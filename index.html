@@ -3,39 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCP-1471 Browser App</title>
+<title>SCP-1471 Simulator</title>
 <style>
   body {
     margin: 0;
     height: 100vh;
+    overflow: hidden;
+    background: #111;
+    color: #fff;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #111;
-    color: #fff;
     font-family: sans-serif;
-    overflow: hidden;
   }
-  #app {
+
+  #container {
     position: relative;
-  }
-  #image {
     width: 400px;
     height: 400px;
     background: url('https://via.placeholder.com/400') no-repeat center/cover;
     border: 2px solid #fff;
   }
-  #creepy {
+
+  #entity {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 400px;
-    height: 400px;
-    background: url('https://i.imgur.com/5K3X7Qy.png') no-repeat center/cover;
+    width: 100px;
+    height: 100px;
+    background: url('https://i.imgur.com/5K3X7Qy.png') no-repeat center/contain;
     opacity: 0;
-    transition: opacity 2s;
     pointer-events: none;
+    transition: opacity 1s, top 1s, left 1s;
   }
+
   button {
     margin-top: 20px;
     padding: 10px 20px;
@@ -44,19 +43,67 @@
 </style>
 </head>
 <body>
-<div id="app">
-  <div id="image"></div>
-  <div id="creepy"></div>
-  <button onclick="increaseCreep()">Look Closer</button>
+
+<div id="container">
+  <div id="entity"></div>
 </div>
+<button onclick="increaseCreep()">Look Closer</button>
+
+<audio id="creepySound" src="https://www.soundjay.com/horror/sounds/creepy-01.mp3"></audio>
 
 <script>
 let opacity = 0;
+let entity = document.getElementById('entity');
+let sound = document.getElementById('creepySound');
+
+// Increase creepiness when button clicked
 function increaseCreep() {
-  opacity += 0.2;
+  opacity += 0.1;
   if(opacity > 1) opacity = 1;
-  document.getElementById('creepy').style.opacity = opacity;
+  entity.style.opacity = opacity;
+  moveEntity();
+  playSoundRandom();
 }
+
+// Move entity randomly inside container
+function moveEntity() {
+  let container = document.getElementById('container');
+  let maxX = container.clientWidth - entity.clientWidth;
+  let maxY = container.clientHeight - entity.clientHeight;
+  let randomX = Math.random() * maxX;
+  let randomY = Math.random() * maxY;
+  entity.style.left = randomX + 'px';
+  entity.style.top = randomY + 'px';
+}
+
+// Play sound randomly
+function playSoundRandom() {
+  if(Math.random() < 0.5){
+    sound.currentTime = 0;
+    sound.play();
+  }
+}
+
+// Automatic creep increase over time
+setInterval(() => {
+  if(opacity < 1){
+    opacity += 0.01;
+    entity.style.opacity = opacity;
+    moveEntity();
+  }
+}, 5000);
+
+// Follow mouse lightly
+document.addEventListener('mousemove', (e) => {
+  let container = document.getElementById('container');
+  let rect = container.getBoundingClientRect();
+  let mouseX = e.clientX - rect.left - entity.clientWidth/2;
+  let mouseY = e.clientY - rect.top - entity.clientHeight/2;
+  entity.style.left = mouseX * 0.05 + parseFloat(entity.style.left || 0) * 0.95 + 'px';
+  entity.style.top = mouseY * 0.05 + parseFloat(entity.style.top || 0) * 0.95 + 'px';
+});
 </script>
+
 </body>
 </html>
+
