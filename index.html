@@ -3,107 +3,122 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCP-1471 Simulator</title>
+<title>FNAF 1 Browser</title>
 <style>
   body {
     margin: 0;
-    height: 100vh;
-    overflow: hidden;
-    background: #111;
+    background: #000;
     color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     font-family: sans-serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-
-  #container {
+  #game {
     position: relative;
-    width: 400px;
+    width: 600px;
     height: 400px;
-    background: url('https://via.placeholder.com/400') no-repeat center/cover;
+    background: #111;
     border: 2px solid #fff;
-  }
-
-  #entity {
-    position: absolute;
-    width: 100px;
-    height: 100px;
-    background: url('https://i.imgur.com/5K3X7Qy.png') no-repeat center/contain;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 1s, top 1s, left 1s;
-  }
-
-  button {
     margin-top: 20px;
-    padding: 10px 20px;
+  }
+  #cameraView {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    transition: background 0.5s;
+  }
+  #controls {
+    margin-top: 10px;
+  }
+  button {
+    padding: 10px 15px;
+    margin: 5px;
     cursor: pointer;
+  }
+  #power {
+    margin-top: 10px;
   }
 </style>
 </head>
 <body>
 
-<div id="container">
-  <div id="entity"></div>
+<h1>FNAF 1 Browser Version</h1>
+<div id="game">
+  <div id="cameraView" style="background-image: url('https://i.imgur.com/wnrSmJ1.jpg');"></div>
 </div>
-<button onclick="increaseCreep()">Look Closer</button>
 
-<audio id="creepySound" src="https://www.soundjay.com/horror/sounds/creepy-01.mp3"></audio>
+<div id="controls">
+  <button onclick="switchCamera('hall')">Hallway</button>
+  <button onclick="switchCamera('office')">Office</button>
+  <button onclick="switchCamera('dining')">Dining</button>
+</div>
+
+<div id="power">Power: <span id="powerLevel">100</span>%</div>
+
+<audio id="jumpscare" src="https://www.soundjay.com/horror/sounds/scream-01.mp3"></audio>
 
 <script>
-let opacity = 0;
-let entity = document.getElementById('entity');
-let sound = document.getElementById('creepySound');
+let power = 100;
+let cameraView = document.getElementById('cameraView');
+let powerDisplay = document.getElementById('powerLevel');
+let jumpscare = document.getElementById('jumpscare');
 
-// Increase creepiness when button clicked
-function increaseCreep() {
-  opacity += 0.1;
-  if(opacity > 1) opacity = 1;
-  entity.style.opacity = opacity;
-  moveEntity();
-  playSoundRandom();
+let animatronics = {
+  freddy: { location: 'hall', chance: 0.1 },
+  bonnie: { location: 'dining', chance: 0.1 }
+};
+
+// Camera images
+let rooms = {
+  office: 'https://i.imgur.com/wnrSmJ1.jpg',
+  hall: 'https://i.imgur.com/5O2wS2R.jpg',
+  dining: 'https://i.imgur.com/qXw5xCJ.jpg'
+};
+
+function switchCamera(room){
+  cameraView.style.backgroundImage = `url('${rooms[room]}')`;
+  power -= 5;
+  if(power < 0) power = 0;
+  powerDisplay.textContent = power;
 }
 
-// Move entity randomly inside container
-function moveEntity() {
-  let container = document.getElementById('container');
-  let maxX = container.clientWidth - entity.clientWidth;
-  let maxY = container.clientHeight - entity.clientHeight;
-  let randomX = Math.random() * maxX;
-  let randomY = Math.random() * maxY;
-  entity.style.left = randomX + 'px';
-  entity.style.top = randomY + 'px';
-}
-
-// Play sound randomly
-function playSoundRandom() {
-  if(Math.random() < 0.5){
-    sound.currentTime = 0;
-    sound.play();
+// Animatronic movement and jumpscare
+function moveAnimatronics(){
+  for(let name in animatronics){
+    let a = animatronics[name];
+    if(Math.random() < a.chance){
+      if(cameraView.style.backgroundImage.includes(rooms[a.location])){
+        gameOver(name);
+      } else {
+        // move to another room randomly
+        let roomsKeys = Object.keys(rooms);
+        a.location = roomsKeys[Math.floor(Math.random() * roomsKeys.length)];
+      }
+    }
   }
 }
 
-// Automatic creep increase over time
+// Game Over
+function gameOver(name){
+  jumpscare.play();
+  alert(name.toUpperCase() + " got you! GAME OVER.");
+  location.reload();
+}
+
+// Reduce power over time
 setInterval(() => {
-  if(opacity < 1){
-    opacity += 0.01;
-    entity.style.opacity = opacity;
-    moveEntity();
+  power -= 1;
+  if(power <= 0){
+    power = 0;
+    alert("You ran out of power! Game Over!");
+    location.reload();
   }
+  powerDisplay.textContent = power;
+  moveAnimatronics();
 }, 5000);
 
-// Follow mouse lightly
-document.addEventListener('mousemove', (e) => {
-  let container = document.getElementById('container');
-  let rect = container.getBoundingClientRect();
-  let mouseX = e.clientX - rect.left - entity.clientWidth/2;
-  let mouseY = e.clientY - rect.top - entity.clientHeight/2;
-  entity.style.left = mouseX * 0.05 + parseFloat(entity.style.left || 0) * 0.95 + 'px';
-  entity.style.top = mouseY * 0.05 + parseFloat(entity.style.top || 0) * 0.95 + 'px';
-});
 </script>
-
 </body>
 </html>
-
