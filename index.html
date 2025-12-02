@@ -30,33 +30,21 @@
 <body>
 <div id="score">Score: 0</div>
 <canvas id="gameCanvas" width="500" height="700"></canvas>
-
 <script>
 // Canvas setup
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Load images
+// Base64 images
 const carImg = new Image();
-carImg.src = 'https://i.imgur.com/OY9P2Fj.png'; // Neon car
-
+carImg.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAA...'; // tiny placeholder, replace with your car image
 const obstacleImg = new Image();
-obstacleImg.src = 'https://i.imgur.com/j6z2dBz.png'; // Obstacle car
-
+obstacleImg.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAA...'; // placeholder obstacle
 const boostImg = new Image();
-boostImg.src = 'https://i.imgur.com/83Z7fPx.png'; // Boost pad
+boostImg.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAA...'; // placeholder boost
 
 // Player car
-let car = {
-    x: canvas.width/2 - 25,
-    y: canvas.height - 140,
-    width: 50,
-    height: 100,
-    speed: 0,
-    maxSpeed: 12,
-    accel: 0.4,
-    decel: 0.05
-};
+let car = { x: canvas.width/2 - 25, y: canvas.height - 140, width: 50, height: 100, speed: 0, maxSpeed: 12, accel: 0.4, decel: 0.05 };
 
 // Input
 let keys = {};
@@ -70,7 +58,7 @@ let stars = [];
 let score = 0;
 let gameOver = false;
 
-// Generate stars for parallax effect
+// Generate stars for parallax
 for(let i=0;i<120;i++){
     stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, size: Math.random()*2, speed: Math.random()*1.5});
 }
@@ -89,23 +77,19 @@ function createBoost() {
 
 // Update game
 function update() {
-    // Car acceleration/deceleration
     if(keys['ArrowUp'] || keys['w']) car.speed += car.accel;
     else car.speed -= car.decel;
     if(car.speed > car.maxSpeed) car.speed = car.maxSpeed;
     if(car.speed < 0) car.speed = 0;
 
-    // Lateral movement
     if(keys['ArrowLeft'] || keys['a']) car.x -= 7;
     if(keys['ArrowRight'] || keys['d']) car.x += 7;
     if(car.x < 50) car.x = 50;
     if(car.x + car.width > canvas.width-50) car.x = canvas.width-50 - car.width;
 
-    // Move obstacles
     obstacles.forEach(obs => obs.y += obs.speed + car.speed*0.5);
     boosts.forEach(boost => boost.y += 5 + car.speed*0.5);
 
-    // Collision detection
     obstacles.forEach(obs => {
         if(car.x < obs.x + obs.width &&
            car.x + car.width > obs.x &&
@@ -113,70 +97,55 @@ function update() {
            car.y + car.height > obs.y) gameOver = true;
     });
 
-    // Boost collision
     boosts.forEach((boost, i) => {
         if(car.x < boost.x + boost.width &&
            car.x + car.width > boost.x &&
            car.y < boost.y + boost.height &&
            car.y + car.height > boost.y) {
-               car.speed = Math.min(car.speed + 5, car.maxSpeed*1.5); // temporary speed boost
+               car.speed = Math.min(car.speed + 5, car.maxSpeed*1.5);
                boosts.splice(i,1);
            }
     });
 
-    // Remove off-screen
     obstacles = obstacles.filter(obs => obs.y < canvas.height);
     boosts = boosts.filter(boost => boost.y < canvas.height);
 
-    // Spawn obstacles and boosts
     if(Math.random() < 0.02 + score/5000) createObstacle();
     if(Math.random() < 0.01) createBoost();
 
-    // Update stars
     stars.forEach(s => {
         s.y += s.speed + car.speed/6;
         if(s.y > canvas.height) { s.y = 0; s.x = Math.random()*canvas.width; }
     });
 
-    // Update score
     score += 0.05 + car.speed/60;
     document.getElementById('score').innerText = 'Score: ' + Math.floor(score);
 }
 
-// Draw road and lane
+// Draw
 function drawRoad() {
     ctx.fillStyle = '#111';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Neon lane lines
+    ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.strokeStyle = '#0ff';
     ctx.lineWidth = 5;
-    ctx.setLineDash([20, 20]);
+    ctx.setLineDash([20,20]);
     ctx.beginPath();
-    ctx.moveTo(canvas.width/2, 0);
-    ctx.lineTo(canvas.width/2, canvas.height);
+    ctx.moveTo(canvas.width/2,0);
+    ctx.lineTo(canvas.width/2,canvas.height);
     ctx.stroke();
     ctx.setLineDash([]);
 }
 
-// Draw stars
 function drawStars() {
     ctx.fillStyle = '#0ff';
     stars.forEach(s => ctx.fillRect(s.x, s.y, s.size, s.size));
 }
 
-// Draw everything
 function draw() {
     drawRoad();
     drawStars();
-
-    // Boost pads
     boosts.forEach(boost => ctx.drawImage(boostImg, boost.x, boost.y, boost.width, boost.height));
-
-    // Obstacles
     obstacles.forEach(obs => ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height));
-
-    // Player car
     ctx.drawImage(carImg, car.x, car.y, car.width, car.height);
 }
 
@@ -195,7 +164,13 @@ function loop() {
     }
 }
 
-carImg.onload = loop;
+// Wait for all images
+let imagesLoaded = 0;
+[carImg, obstacleImg, boostImg].forEach(img => img.onload = () => {
+    imagesLoaded++;
+    if(imagesLoaded === 3) loop();
+});
 </script>
 </body>
 </html>
+
