@@ -3,129 +3,165 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🚗 Ultimate Car Racing 🚗</title>
+<title>🌌 Neon Sci-Fi Racer 🌌</title>
 <style>
   body {
     margin: 0;
     overflow: hidden;
-    background: #111;
-    font-family: 'Arial', sans-serif;
+    background: #000;
+    font-family: 'Orbitron', sans-serif;
+    color: #0ff;
   }
   canvas {
     display: block;
     margin: 0 auto;
-    background: linear-gradient(#555, #222);
+    background: radial-gradient(ellipse at center, #000 0%, #050505 100%);
   }
   #score {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    color: #fff;
-    font-size: 24px;
-    font-weight: bold;
-    text-shadow: 2px 2px 5px #000;
+    top: 20px;
+    left: 20px;
+    font-size: 26px;
+    color: #0ff;
+    text-shadow: 0 0 10px #0ff;
   }
 </style>
 </head>
 <body>
 <div id="score">Score: 0</div>
 <canvas id="gameCanvas" width="500" height="700"></canvas>
-
 <script>
-// Canvas setup
+// Canvas
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Load car image
+// Player car
 const carImg = new Image();
-carImg.src = 'https://i.imgur.com/OY9P2Fj.png'; // Cool car image
+carImg.src = 'https://i.imgur.com/OY9P2Fj.png'; // You can replace with neon car sprite
+let car = {
+    x: canvas.width/2 - 25,
+    y: canvas.height - 140,
+    width: 50,
+    height: 100,
+    speed: 0,
+    maxSpeed: 10,
+    accel: 0.3,
+    decel: 0.05
+};
 
-// Load obstacle image
-const obstacleImg = new Image();
-obstacleImg.src = 'https://i.imgur.com/j6z2dBz.png'; // Obstacle car
-
-// Game variables
-let car = { x: canvas.width/2 - 25, y: canvas.height - 140, width: 50, height: 100, speed: 7 };
-let keys = {};
+// Obstacles
 let obstacles = [];
-let score = 0;
-let gameOver = false;
+const obstacleImg = new Image();
+obstacleImg.src = 'https://i.imgur.com/j6z2dBz.png'; // Replace with sci-fi obstacle
 
-// Handle keys
+// Input
+let keys = {};
 document.addEventListener('keydown', e => keys[e.key] = true);
 document.addEventListener('keyup', e => keys[e.key] = false);
 
-// Create obstacles
+// Score & game
+let score = 0;
+let gameOver = false;
+
+// Create obstacle
 function createObstacle() {
-  const width = 50;
-  const x = Math.random() * (canvas.width - width);
-  obstacles.push({ x, y: -120, width, height: 100 });
+    const width = 50 + Math.random()*30;
+    const x = Math.random()*(canvas.width - width);
+    obstacles.push({x, y: -120, width, height: 100, speed: 6 + score/200});
 }
 
-// Update game
+// Update
 function update() {
-  if (keys['ArrowLeft'] && car.x > 0) car.x -= car.speed;
-  if (keys['ArrowRight'] && car.x + car.width < canvas.width) car.x += car.speed;
+    // Smooth acceleration
+    if(keys['ArrowUp'] || keys['w']) car.speed += car.accel;
+    else car.speed -= car.decel;
+    if(car.speed > car.maxSpeed) car.speed = car.maxSpeed;
+    if(car.speed < 0) car.speed = 0;
 
-  obstacles.forEach(obs => obs.y += 6); // move obstacles
+    // Lateral movement
+    if(keys['ArrowLeft'] || keys['a']) car.x -= 7;
+    if(keys['ArrowRight'] || keys['d']) car.x += 7;
+    if(car.x < 50) car.x = 50;
+    if(car.x + car.width > canvas.width-50) car.x = canvas.width-50 - car.width;
 
-  // Check collisions
-  obstacles.forEach(obs => {
-    if (
-      car.x < obs.x + obs.width &&
-      car.x + car.width > obs.x &&
-      car.y < obs.y + obs.height &&
-      car.y + car.height > obs.y
-    ) gameOver = true;
-  });
+    // Move obstacles
+    obstacles.forEach(obs => obs.y += obs.speed + car.speed*0.5);
 
-  // Remove passed obstacles & score
-  obstacles = obstacles.filter(obs => obs.y < canvas.height);
-  score += 0.02;
-  document.getElementById('score').innerText = 'Score: ' + Math.floor(score);
+    // Collision detection
+    obstacles.forEach(obs => {
+        if(car.x < obs.x + obs.width &&
+           car.x + car.width > obs.x &&
+           car.y < obs.y + obs.height &&
+           car.y + car.height > obs.y) gameOver = true;
+    });
 
-  // Spawn obstacles
-  if (Math.random() < 0.02) createObstacle();
+    // Remove off-screen obstacles
+    obstacles = obstacles.filter(obs => obs.y < canvas.height);
+    
+    // Spawn obstacles
+    if(Math.random() < 0.02 + score/5000) createObstacle();
+
+    // Score
+    score += 0.05 + car.speed/50;
+    document.getElementById('score').innerText = 'Score: ' + Math.floor(score);
 }
 
-// Draw road, car, obstacles
+// Draw neon road
+function drawRoad() {
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Neon lane lines
+    ctx.strokeStyle = '#0ff';
+    ctx.lineWidth = 5;
+    ctx.setLineDash([20, 20]);
+    ctx.beginPath();
+    ctx.moveTo(canvas.width/2, 0);
+    ctx.lineTo(canvas.width/2, canvas.height);
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+// Draw background stars
+let stars = [];
+for(let i=0;i<100;i++){
+    stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, size: Math.random()*2});
+}
+
+function drawStars() {
+    ctx.fillStyle = '#0ff';
+    stars.forEach(s => {
+        ctx.fillRect(s.x, s.y, s.size, s.size);
+        s.y += 2 + car.speed/5;
+        if(s.y > canvas.height) { s.y = 0; s.x = Math.random()*canvas.width;}
+    });
+}
+
+// Draw game
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawRoad();
+    drawStars();
 
-  // Draw road with gradient
-  const roadGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  roadGradient.addColorStop(0, '#444');
-  roadGradient.addColorStop(1, '#111');
-  ctx.fillStyle = roadGradient;
-  ctx.fillRect(100, 0, 300, canvas.height);
+    // Player car
+    ctx.drawImage(carImg, car.x, car.y, car.width, car.height);
 
-  // Draw lane lines
-  ctx.fillStyle = '#fff';
-  for (let i = 0; i < canvas.height; i += 40) {
-    ctx.fillRect(canvas.width/2 - 5, i + (Date.now()/10 % 40), 10, 20);
-  }
-
-  // Draw player car
-  ctx.drawImage(carImg, car.x, car.y, car.width, car.height);
-
-  // Draw obstacles
-  obstacles.forEach(obs => ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height));
+    // Obstacles
+    obstacles.forEach(obs => ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height));
 }
 
-// Game loop
+// Loop
 function loop() {
-  if (!gameOver) {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-  } else {
-    ctx.fillStyle = 'white';
-    ctx.font = '50px Arial';
-    ctx.fillText('GAME OVER', canvas.width/2 - 150, canvas.height/2);
-  }
+    if(!gameOver) {
+        update();
+        draw();
+        requestAnimationFrame(loop);
+    } else {
+        ctx.fillStyle = '#0ff';
+        ctx.font = '50px Orbitron';
+        ctx.fillText('GAME OVER', canvas.width/2-150, canvas.height/2);
+    }
 }
 
-// Start game
 carImg.onload = loop;
 </script>
 </body>
