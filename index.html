@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCP-1471 Browser App</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #111;
+    color: #fff;
+    font-family: sans-serif;
+    overflow: hidden;
+  }
+  #app {
+    position: relative;
+  }
+  #image {
+    width: 400px;
+    height: 400px;
+    background: url('https://via.placeholder.com/400') no-repeat center/cover;
+    border: 2px solid #fff;
+  }
+  #creepy {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 400px;
+    height: 400px;
+    background: url('https://i.imgur.com/5K3X7Qy.png') no-repeat center/cover;
+    opacity: 0;
+    transition: opacity 2s;
+    pointer-events: none;
+  }
+  button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="image"></div>
+  <div id="creepy"></div>
+  <button onclick="increaseCreep()">Look Closer</button>
+</div>
+
+<script>
+let opacity = 0;
+function increaseCreep() {
+  opacity += 0.2;
+  if(opacity > 1) opacity = 1;
+  document.getElementById('creepy').style.opacity = opacity;
+}
+</script>
+</body>
+</html>
